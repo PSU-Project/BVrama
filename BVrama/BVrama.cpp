@@ -25,6 +25,7 @@ int _tmain(int argc, _TCHAR* argv[])
         // Free the resources.
         cvDestroyWindow("Image:");
         cvReleaseImage(&img);
+		//test
         
         return 0;
 }
