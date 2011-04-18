@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B46FA71D-3C93-4477-8166-39B5DEC35A37}</ProjectGuid>
+    <ProjectGuid>{B49C32CF-B774-4D0F-A380-517A5FBD7895}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>BVrama</RootNamespace>
   </PropertyGroup>
@@ -39,7 +39,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\OpenCV2.2\include;C:\OpenCV2.2\include\opencv;$(IncludePath)</IncludePath>
+    <IncludePath>C:\OpenCV2.2\include\opencv;C:\OpenCV2.2\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\OpenCV2.2\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
