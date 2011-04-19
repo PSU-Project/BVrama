@@ -8,7 +8,8 @@
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-        // Open the file.
+		//Cloned and Updated - Ben
+		// Open the file.
         IplImage *img = cvLoadImage("photo.jpg");
         if (!img) {
                 printf("Error: Couldn't open the image file.\n");
