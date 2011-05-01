@@ -58,7 +58,7 @@ Image CombineImagesVertically(Image im1, Image im2);
 
 /* Top level routine.  Read PGM images and keypoints from files given
    in command line arguments, then call FindMatches.
-*/
+*///
 int main (int argc, char **argv)
 {
     int arg = 0;
