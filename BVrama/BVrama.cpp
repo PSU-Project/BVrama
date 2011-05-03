@@ -37,7 +37,6 @@ Keypoint CheckForMatch(Keypoint key, Keypoint klist)
     for (k = klist; k != NULL; k = k->next) {
       dsq = DistSquared(key, k);
 
-    M_PtsList = FindMatches(im1, k1, im2, k2);
 
 	// count the number of matches for matrix allocation
 	int M_count = 0;
