@@ -115,7 +115,7 @@ Image ReadPGM(FILE *fp)
   image = CreateImage(height, width);
   for (r = 0; r < height; r++)
     for (c = 0; c < width; c++)
-      image->pixels[r][c] = ((float) fgetc(fp)) / 255.0;
+      image->pixels[r][c] =((float) fgetc(fp)) / 255.0;
 
   /* Check if there is another image in this file, as the latest PGM
      standard allows for multiple images. */
