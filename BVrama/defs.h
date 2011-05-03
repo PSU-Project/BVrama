@@ -35,6 +35,13 @@ typedef struct KeypointSt {
 } *Keypoint;
 
 
+typedef struct M_KeypointsSt  {
+	Keypoint k1;
+	Keypoint k2;
+	struct M_KeypointsSt *next;
+} *M_Keypoints;
+
+
 
 /*-------------------------- Function prototypes -------------------------*/
 /* These are prototypes for the external functions that are shared

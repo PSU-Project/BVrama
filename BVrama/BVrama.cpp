@@ -86,6 +86,7 @@ int main (int argc, char **argv)
       FatalError("Command line does not specify all images and keys.");
 
     FindMatches(im1, k1, im2, k2);
+
     exit(0);
 }
 
@@ -94,10 +95,16 @@ int main (int argc, char **argv)
    from one image and find its closest match in the second set of
    keypoints.  Then write the result to a file.
 */
-void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2)
+M_Keypoints FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2)
 {
     Keypoint k, match;
     Image result;
+	/// my code here ///
+	M_Keypoints mkp;
+	M_Keypoints mkpl;
+	mkpl=NULL;
+	/// my code here ///
+	
     int count = 0;
 
     /* Create a new image that joins the two images vertically. */
@@ -113,15 +120,18 @@ void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2)
 	 that line ends at correct location in second image.
       */
       if (match != NULL) {
-	count++;
-	DrawLine(result, (int) k->row, (int) k->col,
-		 (int) (match->row + im1->rows), (int) match->col);
+		/////my code here/////
+		  mkp = (M_Keypoints) malloc(sizeof(struct M_KeypointsSt));
+		  mkp->k1=k;
+		  mkp->k2=match;
+		  mkp->next=mkpl;
+		  mkpl=mkp;
+		//////////////////////
+		count++;
       }
     }
-
-    /* Write result image to standard output. */
-    WritePGM(stdout, result);
     fprintf(stderr,"Found %d matches.\n", count);
+	return mkpl;
 }
 
 
