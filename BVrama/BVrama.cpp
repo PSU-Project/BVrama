@@ -51,7 +51,7 @@ Keypoint CheckForMatch(Keypoint key, Keypoint klist)
     else return NULL;
 }
 
-void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int * count)
+M_Keypoints FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int * count)
 {
     Keypoint k, match;
   
@@ -81,6 +81,7 @@ void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int * coun
 		*count=*count+1;
       }
     }
+	return mkpl;
 }
 
 int main (int argc, char **argv)
