@@ -84,12 +84,19 @@ M_Keypoints FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int
 	return mkpl;
 }
 
+CvMat* FindHomographyMatrix (M_Keypoints M_list)
+{
+	CvMat* mat = cvCreateMat(1,1,CV_32FC1);
+	return mat;
+}
+
 int main (int argc, char **argv)
 {
     int arg = 0;
 	int count = 0;
     Image im1 = NULL, im2 = NULL;
     Keypoint k1 = NULL, k2 = NULL;
+	M_Keypoints M_list;
 
     /* Parse command line arguments and read given files.  The command
        line must specify two input images and two files of keypoints
@@ -111,7 +118,10 @@ int main (int argc, char **argv)
     if (im1 == NULL || im2 == NULL || k1 == NULL || k2 == NULL)
       FatalError("Command line does not specify all images and keys.");
 
-    FindMatches(im1, k1, im2, k2, &count);
+    M_list = FindMatches(im1, k1, im2, k2, &count);
+
+
+
 	fprintf(stderr,"%i\n", count);
     return 0;
 }
