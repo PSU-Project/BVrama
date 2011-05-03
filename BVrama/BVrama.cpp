@@ -29,26 +29,12 @@ Keypoint CheckForMatch(Keypoint key, Keypoint klist)
 {
     int dsq, distsq1 = 100000000, distsq2 = 100000000;
     Keypoint k, minkey = NULL;
-	M_Keypoints M_PtsList, itr;
 
     /* Find the two closest matches, and put their squared distances in
        distsq1 and distsq2.
     */
     for (k = klist; k != NULL; k = k->next) {
       dsq = DistSquared(key, k);
-
-    M_PtsList = FindMatches(im1, k1, im2, k2);
-
-	// count the number of matches for matrix allocation
-	int M_count = 0;
-	itr = M_PtsList;
-	while (itr != NULL)
-	{
-		M_count++;
-		itr = itr->next;
-	}
-	
-	printf("# of matches: %d\n", M_count);
 
       if (dsq < distsq1) {
 	distsq2 = distsq1;
@@ -68,7 +54,7 @@ Keypoint CheckForMatch(Keypoint key, Keypoint klist)
 void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int * count)
 {
     Keypoint k, match;
-    Image result;
+  
 	/// my code here ///
 	M_Keypoints mkp;
 	M_Keypoints mkpl;
@@ -99,7 +85,6 @@ void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int * coun
 
 int main (int argc, char **argv)
 {
-	printf("hello\n");
     int arg = 0;
 	int count = 0;
     Image im1 = NULL, im2 = NULL;
