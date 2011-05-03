@@ -48,7 +48,7 @@ int main(int argc, _TCHAR* argv[])
 
 /* -------------------- Local function prototypes ------------------------ */
 
-void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2);
+M_Keypoints FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2);
 Keypoint CheckForMatch(Keypoint key, Keypoint klist);
 int DistSquared(Keypoint k1, Keypoint k2);
 Image CombineImagesVertically(Image im1, Image im2);
@@ -64,6 +64,7 @@ int main (int argc, char **argv)
     int arg = 0;
     Image im1 = NULL, im2 = NULL;
     Keypoint k1 = NULL, k2 = NULL;
+	M_Keypoints M_PtsList, itr;
 
     /* Parse command line arguments and read given files.  The command
        line must specify two input images and two files of keypoints
@@ -85,7 +86,20 @@ int main (int argc, char **argv)
     if (im1 == NULL || im2 == NULL || k1 == NULL || k2 == NULL)
       FatalError("Command line does not specify all images and keys.");
 
-    FindMatches(im1, k1, im2, k2);
+	//FindMatches(im1, k1, im2, k2);
+
+    M_PtsList = FindMatches(im1, k1, im2, k2);
+
+	// count the number of matches for matrix allocation
+	int M_count = 0;
+	itr = M_PtsList;
+	while (itr != NULL)
+	{
+		M_count++;
+		itr = itr->next;
+	}
+	
+	printf("# of matches: %d\n", M_count);
 
     exit(0);
 }
