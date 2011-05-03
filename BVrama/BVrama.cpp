@@ -2,144 +2,29 @@
 //
 
 #include "stdafx.h"
+#include "defs.h"
 #include <cv.h>
 #include <cxcore.h>
 #include <highgui.h>
-#include "defs.h"
 #include <stdarg.h>
-/*
-using namespace cv;
+#include <stdio.h>
+#include <iostream>
 
-int main(int argc, _TCHAR* argv[])
+int DistSquared(Keypoint k1, Keypoint k2)
 {
-		//Cloned and Updated - Ben
-		// Open the file.
-        IplImage *img = cvLoadImage("photo.jpg");
+    int i, dif, distsq = 0;
+    unsigned char *pk1, *pk2;
 
-        if (!img) {
-                printf("Error: Couldn't open the image file.\n");
-                return 1;
-        }
+    pk1 = k1->descrip;
+    pk2 = k2->descrip;
 
-		Mat src = Mat(img,true);
-		Mat dst;
-		bilateralFilter( src, dst, 15, 100.0, 100.0,BORDER_DEFAULT);
-
-		imwrite("photo1.jpg",dst);
-
-        // Display the image.
-        cvNamedWindow("Image:", CV_WINDOW_AUTOSIZE);
-        cvShowImage("Image:", img);
-		cvNamedWindow("mat", 1);
-		imshow("mat", dst);
-
-
-        // Wait for the user to press a key in the GUI window.
-        cvWaitKey(0);
-
-        // Free the resources.
-        cvDestroyWindow("Image:");
-        cvReleaseImage(&img);
-		//test
-        
-        return 0;
-}
-*/
-
-/* -------------------- Local function prototypes ------------------------ */
-
-void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2);
-Keypoint CheckForMatch(Keypoint key, Keypoint klist);
-int DistSquared(Keypoint k1, Keypoint k2);
-Image CombineImagesVertically(Image im1, Image im2);
-
-
-/*----------------------------- Routines ----------------------------------*/
-
-/* Top level routine.  Read PGM images and keypoints from files given
-   in command line arguments, then call FindMatches.
-*///
-int main (int argc, char **argv)
-{
-    int arg = 0;
-    Image im1 = NULL, im2 = NULL;
-    Keypoint k1 = NULL, k2 = NULL;
-
-    /* Parse command line arguments and read given files.  The command
-       line must specify two input images and two files of keypoints
-       using command line arguments as follows:
-          match -im1 i1.pgm -k1 k1.key -im2 i2.pgm -k2 k2.key > result.v
-    */
-    while (++arg < argc) {
-      if (! strcmp(argv[arg], "-im1")) 
-	im1 = ReadPGMFile(argv[++arg]);
-      else if (! strcmp(argv[arg], "-im2")) 
-	im2 = ReadPGMFile(argv[++arg]);
-      else if (! strcmp(argv[arg], "-k1"))
-	k1 = ReadKeyFile(argv[++arg]);
-      else if (! strcmp(argv[arg], "-k2"))
-	k2 = ReadKeyFile(argv[++arg]);
-      else
-	FatalError("Invalid command line argument: %s", argv[arg]);
+    for (i = 0; i < 128; i++) {
+      dif = (int) *pk1++ - (int) *pk2++;
+      distsq += dif * dif;
     }
-    if (im1 == NULL || im2 == NULL || k1 == NULL || k2 == NULL)
-      FatalError("Command line does not specify all images and keys.");
-
-    FindMatches(im1, k1, im2, k2);
-
-    exit(0);
+    return distsq;
 }
 
-
-/* Given a pair of images and their keypoints, pick the first keypoint
-   from one image and find its closest match in the second set of
-   keypoints.  Then write the result to a file.
-*/
-M_Keypoints FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2)
-{
-    Keypoint k, match;
-    Image result;
-	/// my code here ///
-	M_Keypoints mkp;
-	M_Keypoints mkpl;
-	mkpl=NULL;
-	/// my code here ///
-	
-    int count = 0;
-
-    /* Create a new image that joins the two images vertically. */
-    result = CombineImagesVertically(im1, im2);
-
-    /* Match the keys in list keys1 to their best matches in keys2.
-    */
-    for (k= keys1; k != NULL; k = k->next) {
-      match = CheckForMatch(k, keys2);  
-
-      /* Draw a line on the image from keys1 to match.  Note that we
-	 must add row count of first image to row position in second so
-	 that line ends at correct location in second image.
-      */
-      if (match != NULL) {
-		/////my code here/////
-		  mkp = (M_Keypoints) malloc(sizeof(struct M_KeypointsSt));
-		  mkp->k1=k;
-		  mkp->k2=match;
-		  mkp->next=mkpl;
-		  mkpl=mkp;
-		//////////////////////
-		count++;
-      }
-    }
-    fprintf(stderr,"Found %d matches.\n", count);
-	return mkpl;
-}
-
-
-/* This searches through the keypoints in klist for the two closest
-   matches to key.  If the closest is less than 0.6 times distance to
-   second closest, then return the closest match.  Otherwise, return
-   NULL.
-*/
 Keypoint CheckForMatch(Keypoint key, Keypoint klist)
 {
     int dsq, distsq1 = 100000000, distsq2 = 100000000;
@@ -166,48 +51,68 @@ Keypoint CheckForMatch(Keypoint key, Keypoint klist)
     else return NULL;
 }
 
-
-/* Return squared distance between two keypoint descriptors.
-*/
-int DistSquared(Keypoint k1, Keypoint k2)
+void FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int * count)
 {
-    int i, dif, distsq = 0;
-    unsigned char *pk1, *pk2;
-
-    pk1 = k1->descrip;
-    pk2 = k2->descrip;
-
-    for (i = 0; i < 128; i++) {
-      dif = (int) *pk1++ - (int) *pk2++;
-      distsq += dif * dif;
-    }
-    return distsq;
-}
-
-
-/* Return a new image that contains the two images with im1 above im2.
-*/
-Image CombineImagesVertically(Image im1, Image im2)
-{
-    int rows, cols, r, c;
+    Keypoint k, match;
     Image result;
+	/// my code here ///
+	M_Keypoints mkp;
+	M_Keypoints mkpl;
+	mkpl=NULL;
+	/// my code here ///
 
-    rows = im1->rows + im2->rows;
-    cols = MAX(im1->cols, im2->cols);
-    result = CreateImage(rows, cols);
+    /* Match the keys in list keys1 to their best matches in keys2.
+    */
+    for (k= keys1; k != NULL; k = k->next) {
+      match = CheckForMatch(k, keys2);  
 
-    /* Set all pixels to 0,5, so that blank regions are grey. */
-    for (r = 0; r < rows; r++)
-      for (c = 0; c < cols; c++)
-	result->pixels[r][c] = 0.5;
-
-    /* Copy images into result. */
-    for (r = 0; r < im1->rows; r++)
-      for (c = 0; c < im1->cols; c++)
-	result->pixels[r][c] = im1->pixels[r][c];
-    for (r = 0; r < im2->rows; r++)
-      for (c = 0; c < im2->cols; c++)
-	result->pixels[r + im1->rows][c] = im2->pixels[r][c];
-    
-    return result;
+      /* Draw a line on the image from keys1 to match.  Note that we
+	 must add row count of first image to row position in second so
+	 that line ends at correct location in second image.
+      */
+      if (match != NULL) {
+		/////my code here/////
+		  mkp = (M_Keypoints) malloc(sizeof(struct M_KeypointsSt));
+		  mkp->k1=k;
+		  mkp->k2=match;
+		  mkp->next=mkpl;
+		  mkpl=mkp;
+		//////////////////////
+		*count=*count+1;
+      }
+    }
 }
+
+int main (int argc, char **argv)
+{
+	printf("hello\n");
+    int arg = 0;
+	int count = 0;
+    Image im1 = NULL, im2 = NULL;
+    Keypoint k1 = NULL, k2 = NULL;
+
+    /* Parse command line arguments and read given files.  The command
+       line must specify two input images and two files of keypoints
+       using command line arguments as follows:
+          match -im1 i1.pgm -k1 k1.key -im2 i2.pgm -k2 k2.key > result.v
+    */
+    while (++arg < argc) {
+      if (! strcmp(argv[arg], "-im1")) 
+	im1 = ReadPGMFile(argv[++arg]);
+      else if (! strcmp(argv[arg], "-im2")) 
+	im2 = ReadPGMFile(argv[++arg]);
+      else if (! strcmp(argv[arg], "-k1"))
+	k1 = ReadKeyFile(argv[++arg]);
+      else if (! strcmp(argv[arg], "-k2"))
+	k2 = ReadKeyFile(argv[++arg]);
+      else
+	FatalError("Invalid command line argument: %s", argv[arg]);
+    }
+    if (im1 == NULL || im2 == NULL || k1 == NULL || k2 == NULL)
+      FatalError("Command line does not specify all images and keys.");
+
+    FindMatches(im1, k1, im2, k2, &count);
+	fprintf(stderr,"%i\n", count);
+    return 0;
+}
+
