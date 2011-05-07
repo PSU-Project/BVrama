@@ -160,12 +160,29 @@ int main (int argc, char **argv)
 
     M_list = FindMatches(im1, k1, im2, k2, &count);
 
+	// Open the file.
+    IplImage *img = cvLoadImage("pic9c.jpg");
+    if (!img) {
+            printf("Error: Couldn't open the image file.\n");
+            return 1;
+	}
+
 	CvMat* homographyMatrix = FindHomographyMatrix(M_list);
+	CvMat* result			= cvCreateMat(384,512,CV_32FC3);
 
-	//check the answer
+	cvWarpPerspective(img, result, homographyMatrix);  
 
+	// Display the image.
+    cvNamedWindow("Image:", CV_WINDOW_AUTOSIZE);
+    cvShowImage("Image:", result);
 
-	fprintf(stderr,"%i\n", count);
+    // Wait for the user to press a key in the GUI window.
+    cvWaitKey(0);
+
+    // Free the resources.
+    cvDestroyWindow("Image:");
+    //cvReleaseImage(&img);
+
     return 0;
 }
 
