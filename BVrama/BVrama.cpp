@@ -88,8 +88,48 @@ M_Keypoints FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int
 
 CvMat* FindHomographyMatrix (M_Keypoints M_list)
 {
-	CvMat* mat = cvCreateMat(1,1,CV_32FC1);
-	return mat;
+	M_Keypoints itr;
+	itr = M_list;
+	int cnt = 0;
+	int rows, cols, i;
+	float *pts1Array, *pts2Array;
+	bool even = true;
+
+	while (itr != NULL)
+	{
+		cnt++;
+		itr = itr->next;
+	}
+
+	//Size the array
+	rows = (cnt);
+	cols = 2;
+	pts1Array = new float[(rows*cols)];
+	pts2Array = new float[(rows*cols)];
+
+	int start;
+	itr = M_list;
+	//populate the array with points (must be square)
+	for (i = 0; i<rows; i++)
+	{
+		start = i * cols;
+		pts1Array[start]		= itr->k1->row;
+		pts1Array[start+1]		= itr->k1->col;
+
+		pts2Array[start]		= itr->k2->row;
+		pts2Array[start+1]		= itr->k2->col;
+
+		itr = itr->next;
+		
+	}
+	
+	CvMat mat			= cvMat(rows, cols, CV_32FC1, pts1Array);
+	CvMat otherMat		= cvMat(rows, cols, CV_32FC1, pts2Array); 
+	CvMat* answerMat	= cvCreateMat(3,3,CV_32FC1);
+	
+	cvFindHomography(&mat, &otherMat, answerMat);
+	
+	return answerMat;
 }
 
 int main (int argc, char **argv)
@@ -122,6 +162,9 @@ int main (int argc, char **argv)
 
     M_list = FindMatches(im1, k1, im2, k2, &count);
 	
+	CvMat* homographyMatrix = FindHomographyMatrix(M_list);
+
+	//check the answer
 	fprintf(stderr,"%i\n", count);
 
     return 0;
