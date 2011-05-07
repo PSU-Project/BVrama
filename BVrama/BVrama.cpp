@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <iostream>
 
+using namespace cv;
+
 int DistSquared(Keypoint k1, Keypoint k2)
 {
     int i, dif, distsq = 0;
@@ -119,10 +121,9 @@ int main (int argc, char **argv)
       FatalError("Command line does not specify all images and keys.");
 
     M_list = FindMatches(im1, k1, im2, k2, &count);
-
-
-
+	
 	fprintf(stderr,"%i\n", count);
+
     return 0;
 }
 
