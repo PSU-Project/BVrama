@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <iostream>
 
+using namespace cv;
+
 int DistSquared(Keypoint k1, Keypoint k2)
 {
     int i, dif, distsq = 0;
@@ -63,14 +65,11 @@ M_Keypoints FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int
 
     /* Match the keys in list keys1 to their best matches in keys2.
     */
-    for (k= keys1; k != NULL; k = k->next) {
+    for (k= keys1; k != NULL; k = k->next) 
+	{
       match = CheckForMatch(k, keys2);  
-
-      /* Draw a line on the image from keys1 to match.  Note that we
-	 must add row count of first image to row position in second so
-	 that line ends at correct location in second image.
-      */
-      if (match != NULL) {
+      if (match != NULL) 
+	  {
 		/////my code here/////
 		  mkp = (M_Keypoints) malloc(sizeof(struct M_KeypointsSt));
 		  mkp->k1=k;
@@ -101,31 +100,27 @@ CvMat* FindHomographyMatrix (M_Keypoints M_list)
 
 	//Size the array
 	rows = (cnt);
-	cols = 2;
-	pts1Array = new float[(rows*cols)];
-	pts2Array = new float[(rows*cols)];
+	pts1Array = new float[(rows*2)];
+	pts2Array = new float[(rows*2)];
 
-	int start;
 	itr = M_list;
 	//populate the array with points (must be square)
-	for (i = 0; i<rows; i++)
+	for (i = 0; i<rows*2; i=i+2)
 	{
-		start = i * cols;
-		pts1Array[start]		= itr->k1->row;
-		pts1Array[start+1]		= itr->k1->col;
+		pts1Array[i]		= itr->k1->col;
+		pts1Array[i+1]		= itr->k1->row;
 
-		pts2Array[start]		= itr->k2->row;
-		pts2Array[start+1]		= itr->k2->col;
+		pts2Array[i]		= itr->k2->col;
+		pts2Array[i+1]		= itr->k2->row;
 
-		itr = itr->next;
-		
+		itr = itr->next;	
 	}
 	
-	CvMat mat			= cvMat(rows, cols, CV_32FC1, pts1Array);
-	CvMat otherMat		= cvMat(rows, cols, CV_32FC1, pts2Array); 
-	CvMat* answerMat	= cvCreateMat(3,3,CV_32FC1);
+	CvMat matdst			= cvMat(rows, 2, CV_32FC1, pts1Array);
+	CvMat matsrc		    = cvMat(rows, 2, CV_32FC1, pts2Array); 
+	CvMat* answerMat        = cvCreateMat(3,3,CV_32FC1);
 	
-	cvFindHomography(&mat, &otherMat, answerMat);
+	cvFindHomography(&matsrc, &matdst , answerMat, CV_RANSAC);
 	
 	return answerMat;
 }
@@ -159,24 +154,61 @@ int main (int argc, char **argv)
       FatalError("Command line does not specify all images and keys.");
 
     M_list = FindMatches(im1, k1, im2, k2, &count);
-
+	
 	// Open the file.
-    IplImage *img = cvLoadImage("pic10c.jpg");
-    if (!img) {
+    IplImage *img1 = cvLoadImage("pic9c.jpg");
+    if (!img1) {
+            printf("Error: Couldn't open the image file.\n");
+            return 1;
+	}
+	IplImage *img2 = cvLoadImage("pic10c.jpg");
+    if (!img2) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
 	}
 
+	M_Keypoints itr;
+	itr = M_list;
+
+	/* display matched points */
+	while(itr!=NULL)
+	{
+		cvCircle(img1,cvPoint(itr->k1->col,itr->k1->row),3,cvScalar(0,0,255),1);
+		cvCircle(img2,cvPoint(itr->k2->col,itr->k2->row),3,cvScalar(0,0,255),1);
+		itr=itr->next;
+	}
+	
 	CvMat* homographyMatrix = FindHomographyMatrix(M_list);
-	IplImage* result;
 	result = cvCloneImage(img);
 	//CvMat* result			= cvCreateMat(384,512,CV_32FC3);
 
-	cvWarpPerspective(img, result, homographyMatrix);  
+ //        Just for checking homography Matrix
+	float a1=CV_MAT_ELEM(*homographyMatrix,float,0,0);
+	float a2=CV_MAT_ELEM(*homographyMatrix,float,1,0);
+	float a3=CV_MAT_ELEM(*homographyMatrix,float,2,0);
+	float a4=CV_MAT_ELEM(*homographyMatrix,float,0,1);
+	float a5=CV_MAT_ELEM(*homographyMatrix,float,1,1);
+	float a6=CV_MAT_ELEM(*homographyMatrix,float,2,1);
+	float a7=CV_MAT_ELEM(*homographyMatrix,float,0,2);
+	float a8=CV_MAT_ELEM(*homographyMatrix,float,1,2);
+	float a9=CV_MAT_ELEM(*homographyMatrix,float,2,2);
+
+	IplImage * cimg1= cvCloneImage(img1);
+	IplImage * cimg2= cvCloneImage(img2);
+
+	IplImage * result = cvCreateImage(cvSize(600,550),IPL_DEPTH_8U,3);
+	cvWarpPerspective(cimg2, result, homographyMatrix);  
 
 	// Display the image.
-    cvNamedWindow("Image:", CV_WINDOW_AUTOSIZE);
-    cvShowImage("Image:", result);
+
+
+    cvNamedWindow("Image1:", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("Image2:", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("Image3:", CV_WINDOW_AUTOSIZE);
+    cvShowImage("Image1:", img1);
+	cvShowImage("Image2:", img2);
+	cvShowImage("Image3:", result);
+
 
     // Wait for the user to press a key in the GUI window.
     cvWaitKey(0);
