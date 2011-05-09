@@ -161,14 +161,16 @@ int main (int argc, char **argv)
     M_list = FindMatches(im1, k1, im2, k2, &count);
 
 	// Open the file.
-    IplImage *img = cvLoadImage("pic9c.jpg");
+    IplImage *img = cvLoadImage("pic10c.jpg");
     if (!img) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
 	}
 
 	CvMat* homographyMatrix = FindHomographyMatrix(M_list);
-	CvMat* result			= cvCreateMat(384,512,CV_32FC3);
+	IplImage* result;
+	result = cvCloneImage(img);
+	//CvMat* result			= cvCreateMat(384,512,CV_32FC3);
 
 	cvWarpPerspective(img, result, homographyMatrix);  
 
