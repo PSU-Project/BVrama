@@ -113,15 +113,14 @@ CvMat* FindHomographyMatrix (M_Keypoints M_list)
 		pts2Array[i]		= itr->k2->col;
 		pts2Array[i+1]		= itr->k2->row;
 
-		itr = itr->next;
-		
+		itr = itr->next;	
 	}
 	
 	CvMat matdst			= cvMat(rows, 2, CV_32FC1, pts1Array);
 	CvMat matsrc		    = cvMat(rows, 2, CV_32FC1, pts2Array); 
 	CvMat* answerMat        = cvCreateMat(3,3,CV_32FC1);
 	
-	cvFindHomography(&matsrc, &matdst , answerMat);
+	cvFindHomography(&matsrc, &matdst , answerMat, CV_RANSAC);
 	
 	return answerMat;
 }
@@ -195,8 +194,8 @@ int main (int argc, char **argv)
 	IplImage * cimg1= cvCloneImage(img1);
 	IplImage * cimg2= cvCloneImage(img2);
 
-	CvMat* result			= cvCreateMat(384,512,CV_32FC3);
-	cvWarpPerspective(cimg2, cimg1, homographyMatrix);  
+	IplImage * result = cvCreateImage(cvSize(600,550),IPL_DEPTH_8U,3);
+	cvWarpPerspective(cimg2, result, homographyMatrix);  
 
 	// Display the image.
 
@@ -206,7 +205,7 @@ int main (int argc, char **argv)
 	cvNamedWindow("Image3:", CV_WINDOW_AUTOSIZE);
     cvShowImage("Image1:", img1);
 	cvShowImage("Image2:", img2);
-	cvShowImage("Image3:", cimg1);
+	cvShowImage("Image3:", result);
 
 
     // Wait for the user to press a key in the GUI window.
