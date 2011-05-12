@@ -12,6 +12,8 @@
 
 using namespace cv;
 
+void benImageTesting(IplImage* img1, IplImage* result);
+
 int DistSquared(Keypoint k1, Keypoint k2)
 {
     int i, dif, distsq = 0;
@@ -179,7 +181,7 @@ int main (int argc, char **argv)
 	}
 	
 	CvMat* homographyMatrix = FindHomographyMatrix(M_list);
-	result = cvCloneImage(img);
+	//result = cvCloneImage(img);
 	//CvMat* result			= cvCreateMat(384,512,CV_32FC3);
 
  //        Just for checking homography Matrix
@@ -193,15 +195,26 @@ int main (int argc, char **argv)
 	float a8=CV_MAT_ELEM(*homographyMatrix,float,1,2);
 	float a9=CV_MAT_ELEM(*homographyMatrix,float,2,2);
 
-	IplImage * cimg1= cvCloneImage(img1);
-	IplImage * cimg2= cvCloneImage(img2);
+	IplImage * result = cvCreateImage(cvSize(625,550),IPL_DEPTH_8U,3);
+	//IplImage * result2 = cvCreateImage(cvSize(625,550),IPL_DEPTH_8U,3);
+	cvWarpPerspective(img2, result, homographyMatrix);
+	//cvWarpPerspective(img1, result2, homographyMatrix);
 
-	IplImage * result = cvCreateImage(cvSize(600,550),IPL_DEPTH_8U,3);
-	cvWarpPerspective(cimg2, result, homographyMatrix);  
-
+	
+	if(!cvSaveImage("CircledPic9.jpg",img1)) 
+	{
+		printf("Could not save: %s\n","CircledPic9.jpg");
+	}
+	if(!cvSaveImage("CircledPic10.jpg",img2)) 
+	{
+		printf("Could not save: %s\n","CircledPic10.jpg");
+	}
+	if(!cvSaveImage("CircledPic10Result.jpg",result)) 
+	{
+		printf("Could not save: %s\n","CircledPic10Result.jpg");
+	}
+	
 	// Display the image.
-
-
     cvNamedWindow("Image1:", CV_WINDOW_AUTOSIZE);
 	cvNamedWindow("Image2:", CV_WINDOW_AUTOSIZE);
 	cvNamedWindow("Image3:", CV_WINDOW_AUTOSIZE);
@@ -217,6 +230,57 @@ int main (int argc, char **argv)
     cvDestroyWindow("Image:");
     //cvReleaseImage(&img);
 
+	benImageTesting(img1, result);
+
     return 0;
 }
 
+void benImageTesting(IplImage* left, IplImage* right)
+{
+	IplImage * test = cvCreateImage(cvSize(800,600),IPL_DEPTH_8U,3);
+	IplImage * test2 = cvCreateImage(cvSize(800,600),IPL_DEPTH_8U,3);
+
+	//These values need to be calculated using the matched points
+	int overlap = 159;
+	int y_offset = 3;
+	int x_offset = 225;
+
+	//Copy the first image onto the blank test image
+
+	//set the region of interest
+	cvSetImageROI(left, cvRect(0, 0, left->width, left->height));
+	cvSetImageROI(test, cvRect(0, y_offset, left->width, left->height));
+	cvCopy(left, test);
+	//always release the region of interest
+	cvResetImageROI(left);
+	cvResetImageROI(test);
+	
+	//blend the overlap of the two images
+	cvSetImageROI(right, cvRect(x_offset, 0, overlap, right->height));
+	cvSetImageROI(test, cvRect(left->width-overlap, 0, overlap, right->height));
+	cvAddWeighted(test, 0.5, right, 0.5, 0.0, test);
+	cvResetImageROI(right);
+	cvResetImageROI(test);
+	
+	//add the remainder of the image to the end
+	cvSetImageROI(test, cvRect(left->width, 0, 
+					right->width-(x_offset + overlap), right->height));
+	cvSetImageROI(right, cvRect(x_offset+overlap,0,right->width,right->height));
+	
+	/*
+	//testing
+	cvNamedWindow("check", 1 );
+	cvShowImage("check", right );
+	cvWaitKey();
+	*/
+
+	cvCopy(right, test);
+	cvResetImageROI(right);
+	cvResetImageROI(test);
+	
+	cvNamedWindow("Alpha_Blend", 1 );
+	cvShowImage("Alpha_Blend", test );
+	cvWaitKey();
+	
+	return;
+}
