@@ -156,12 +156,12 @@ int main (int argc, char **argv)
     M_list = FindMatches(im1, k1, im2, k2, &count);
 	
 	// Open the file.
-    IplImage *img1 = cvLoadImage("pic9c.jpg");
+    IplImage *img1 = cvLoadImage("pic8c.jpg");
     if (!img1) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
 	}
-	IplImage *img2 = cvLoadImage("pic10c.jpg");
+	IplImage *img2 = cvLoadImage("pic9c.jpg");
     if (!img2) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
@@ -193,18 +193,16 @@ int main (int argc, char **argv)
 
 	IplImage * cimg1= cvCloneImage(img1);
 	IplImage * cimg2= cvCloneImage(img2);
-
 	IplImage * result = cvCreateImage(cvSize(600,550),IPL_DEPTH_8U,3);
-	cvWarpPerspective(cimg2, result, homographyMatrix);  
-
+	
+	cvWarpPerspective(cimg2, result, homographyMatrix);
 	// Display the image.
-
 
     cvNamedWindow("Image1:", CV_WINDOW_AUTOSIZE);
 	cvNamedWindow("Image2:", CV_WINDOW_AUTOSIZE);
 	cvNamedWindow("Image3:", CV_WINDOW_AUTOSIZE);
-    cvShowImage("Image1:", img1);
-	cvShowImage("Image2:", img2);
+    cvShowImage("Image1:", cimg1);
+	cvShowImage("Image2:", cimg2);
 	cvShowImage("Image3:", result);
 
 
