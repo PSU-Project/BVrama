@@ -12,7 +12,7 @@
 
 using namespace cv;
 
-void benImageTesting(IplImage* img1, IplImage* result);
+void Stitch(IplImage* img1, IplImage* result);
 
 int DistSquared(Keypoint k1, Keypoint k2)
 {
@@ -158,12 +158,12 @@ int main (int argc, char **argv)
     M_list = FindMatches(im1, k1, im2, k2, &count);
 	
 	// Open the file.
-    IplImage *img1 = cvLoadImage("pic8c.jpg");
+    IplImage *img1 = cvLoadImage("pic9c.jpg");
     if (!img1) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
 	}
-	IplImage *img2 = cvLoadImage("pic9c.jpg");
+	IplImage *img2 = cvLoadImage("pic10c.jpg");
     if (!img2) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
@@ -195,12 +195,8 @@ int main (int argc, char **argv)
 	float a8=CV_MAT_ELEM(*homographyMatrix,float,1,2);
 	float a9=CV_MAT_ELEM(*homographyMatrix,float,2,2);
 
-	IplImage * result = cvCreateImage(cvSize(625,550),IPL_DEPTH_8U,3);
-	//IplImage * result2 = cvCreateImage(cvSize(625,550),IPL_DEPTH_8U,3);
+	IplImage * result = cvCreateImage(cvSize(500,500),IPL_DEPTH_8U,3);
 	cvWarpPerspective(img2, result, homographyMatrix);
-	//cvWarpPerspective(img1, result2, homographyMatrix);
-	
-	cvWarpPerspective(cimg2, result, homographyMatrix);
 	
 	if(!cvSaveImage("CircledPic9.jpg",img1)) 
 	{
@@ -217,66 +213,34 @@ int main (int argc, char **argv)
 	
 	// Display the image.
     cvNamedWindow("Image1:", CV_WINDOW_AUTOSIZE);
-	cvNamedWindow("Image2:", CV_WINDOW_AUTOSIZE);
-	cvNamedWindow("Image3:", CV_WINDOW_AUTOSIZE);
-    cvShowImage("Image1:", cimg1);
-	cvShowImage("Image2:", cimg2);
-	cvShowImage("Image3:", result);
+ 	cvShowImage("Image1:", result);
 
-
-    // Wait for the user to press a key in the GUI window.
-    cvWaitKey(0);
-
-    // Free the resources.
-    cvDestroyWindow("Image:");
-    //cvReleaseImage(&img);
-
-	benImageTesting(img1, result);
+	Stitch(img1, result);
 
     return 0;
 }
 
-void benImageTesting(IplImage* left, IplImage* right)
+void Stitch(IplImage* left, IplImage* right)
 {
 	IplImage * test = cvCreateImage(cvSize(800,600),IPL_DEPTH_8U,3);
-	IplImage * test2 = cvCreateImage(cvSize(800,600),IPL_DEPTH_8U,3);
-
 	//These values need to be calculated using the matched points
-	int overlap = 159;
-	int y_offset = 3;
-	int x_offset = 225;
+	int overlap = 160;
+	int y_offset = 0;
+	int x_offset = 230;
 
 	//Copy the first image onto the blank test image
-
+	//add the remainder of the image to the end
+	cvSetImageROI(test, cvRect(0, 0, right->width, right->height));
+	cvSetImageROI(right, cvRect(0, 0,right->width,right->height));
+	cvCopy(right, test);
+	cvResetImageROI(right);
+	cvResetImageROI(test);
 	//set the region of interest
+	cvSetImageROI(test, cvRect(0, 0, left->width, left->height));
 	cvSetImageROI(left, cvRect(0, 0, left->width, left->height));
-	cvSetImageROI(test, cvRect(0, y_offset, left->width, left->height));
 	cvCopy(left, test);
 	//always release the region of interest
 	cvResetImageROI(left);
-	cvResetImageROI(test);
-	
-	//blend the overlap of the two images
-	cvSetImageROI(right, cvRect(x_offset, 0, overlap, right->height));
-	cvSetImageROI(test, cvRect(left->width-overlap, 0, overlap, right->height));
-	cvAddWeighted(test, 0.5, right, 0.5, 0.0, test);
-	cvResetImageROI(right);
-	cvResetImageROI(test);
-	
-	//add the remainder of the image to the end
-	cvSetImageROI(test, cvRect(left->width, 0, 
-					right->width-(x_offset + overlap), right->height));
-	cvSetImageROI(right, cvRect(x_offset+overlap,0,right->width,right->height));
-	
-	/*
-	//testing
-	cvNamedWindow("check", 1 );
-	cvShowImage("check", right );
-	cvWaitKey();
-	*/
-
-	cvCopy(right, test);
-	cvResetImageROI(right);
 	cvResetImageROI(test);
 	
 	cvNamedWindow("Alpha_Blend", 1 );
