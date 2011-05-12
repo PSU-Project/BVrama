@@ -241,9 +241,9 @@ void benImageTesting(IplImage* left, IplImage* right)
 	IplImage * test2 = cvCreateImage(cvSize(800,600),IPL_DEPTH_8U,3);
 
 	//These values need to be calculated using the matched points
-	int overlap = 159;
-	int y_offset = 3;
-	int x_offset = 225;
+	int overlap = 160;
+	int y_offset = 0;
+	int x_offset = 230;
 
 	//Copy the first image onto the blank test image
 
@@ -258,7 +258,7 @@ void benImageTesting(IplImage* left, IplImage* right)
 	//blend the overlap of the two images
 	cvSetImageROI(right, cvRect(x_offset, 0, overlap, right->height));
 	cvSetImageROI(test, cvRect(left->width-overlap, 0, overlap, right->height));
-	cvAddWeighted(test, 0.5, right, 0.5, 0.0, test);
+	cvAddWeighted(test, 1.0, right, 0.0, 0.0, test);
 	cvResetImageROI(right);
 	cvResetImageROI(test);
 	
