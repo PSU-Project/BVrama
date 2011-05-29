@@ -12,7 +12,7 @@
 
 using namespace cv;
 
-void Stitch(IplImage* img1, IplImage* result);
+IplImage* Stitch(IplImage* img1, IplImage* result,float * p1, float * p2);
 
 int DistSquared(Keypoint k1, Keypoint k2)
 {
@@ -55,7 +55,7 @@ Keypoint CheckForMatch(Keypoint key, Keypoint klist)
     else return NULL;
 }
 
-M_Keypoints FindMatches(Image im1, Keypoint keys1, Image im2, Keypoint keys2,int * count)
+M_Keypoints FindMatches(Keypoint keys1, Keypoint keys2,int * count)
 {
     Keypoint k, match;
   
@@ -127,12 +127,52 @@ CvMat* FindHomographyMatrix (M_Keypoints M_list)
 	return answerMat;
 }
 
+
+void MyStitch(IplImage* left, IplImage* right)
+{
+	IplImage * lg1 = cvCreateImage(cvSize(left->width/2,left->height/2),left->depth,left->nChannels);
+	IplImage * rg1 = cvCreateImage(cvSize(right->width/2,right->height/2),right->depth,right->nChannels);
+	cvPyrDown(left,lg1);
+	cvPyrDown(right,rg1);
+	
+	IplImage * lg2 = cvCreateImage(cvSize(left->width,left->height),left->depth,left->nChannels);
+	IplImage * rg2 = cvCreateImage(cvSize(right->width,right->height),right->depth,right->nChannels);
+	cvPyrUp(lg1,lg2);
+	cvPyrUp(rg1,rg2);
+	IplImage * l = cvCreateImage(cvSize(left->width,left->height),left->depth,left->nChannels);
+	IplImage * r = cvCreateImage(cvSize(right->width,right->height),right->depth,right->nChannels);
+	cvSub(left,lg2,l);
+	cvSub(right,rg2,r);
+
+	/*******************************/
+	IplImage * result = cvCreateImage(cvSize(600,600),IPL_DEPTH_8U,3);
+
+	//Copy the first image onto the blank test image
+	//add the remainder of the image to the end
+	cvSetImageROI(result, cvRect(0, 0, right->width, right->height));
+	cvSetImageROI(r, cvRect(0, 0,r->width,r->height));
+	cvCopy(r, result);
+	cvResetImageROI(r);
+	cvResetImageROI(result);
+	//set the region of interest
+	cvSetImageROI(result, cvRect(0, 0, l->width, l->height));
+	cvSetImageROI(l, cvRect(0, 0, l->width, l->height));
+	cvAddWeighted(l,1,result,0,0,result);
+	//always release the region of interest
+	cvResetImageROI(l);
+	cvResetImageROI(result);
+
+	/************************************/
+	cvNamedWindow("L1", CV_WINDOW_AUTOSIZE );
+	cvShowImage("Out", result );
+	cvWaitKey();
+
+	
+}
 int main (int argc, char **argv)
 {
-    int arg = 0;
 	int count = 0;
-    Image im1 = NULL, im2 = NULL;
-    Keypoint k1 = NULL, k2 = NULL;
+    Keypoint key1 = NULL, key2 = NULL;
 	M_Keypoints M_list;
 
     /* Parse command line arguments and read given files.  The command
@@ -140,30 +180,26 @@ int main (int argc, char **argv)
        using command line arguments as follows:
           match -im1 i1.pgm -k1 k1.key -im2 i2.pgm -k2 k2.key > result.v
     */
-    while (++arg < argc) {
-      if (! strcmp(argv[arg], "-im1")) 
-	im1 = ReadPGMFile(argv[++arg]);
-      else if (! strcmp(argv[arg], "-im2")) 
-	im2 = ReadPGMFile(argv[++arg]);
-      else if (! strcmp(argv[arg], "-k1"))
-	k1 = ReadKeyFile(argv[++arg]);
-      else if (! strcmp(argv[arg], "-k2"))
-	k2 = ReadKeyFile(argv[++arg]);
-      else
-	FatalError("Invalid command line argument: %s", argv[arg]);
-    }
-    if (im1 == NULL || im2 == NULL || k1 == NULL || k2 == NULL)
-      FatalError("Command line does not specify all images and keys.");
+	/****** reading key files *****************/
+	char k1[20]={"1.key"};
+	char k2[20]={"2.key"};
 
-    M_list = FindMatches(im1, k1, im2, k2, &count);
+	key1 = ReadKeyFile(k1);
+	key2 = ReadKeyFile(k2);
+	
+    if (key1 == NULL || key2 == NULL)
+      FatalError("Command line does not specify keys.");
+	/*******************************************/
+
+    M_list = FindMatches( key1, key2, &count);
 	
 	// Open the file.
-    IplImage *img1 = cvLoadImage("pic9c.jpg");
+    IplImage *img1 = cvLoadImage("1c.jpg");
     if (!img1) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
 	}
-	IplImage *img2 = cvLoadImage("pic10c.jpg");
+	IplImage *img2 = cvLoadImage("2c.jpg");
     if (!img2) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
@@ -173,30 +209,35 @@ int main (int argc, char **argv)
 	itr = M_list;
 
 	/* display matched points */
-	while(itr!=NULL)
-	{
-		cvCircle(img1,cvPoint(itr->k1->col,itr->k1->row),3,cvScalar(0,0,255),1);
-		cvCircle(img2,cvPoint(itr->k2->col,itr->k2->row),3,cvScalar(0,0,255),1);
-		itr=itr->next;
-	}
-	
+//	while(itr!=NULL)
+//	{
+//		cvCircle(img1,cvPoint(itr->k1->col,itr->k1->row),3,cvScalar(0,0,255),1);
+//		cvCircle(img2,cvPoint(itr->k2->col,itr->k2->row),3,cvScalar(0,0,255),1);
+//		itr=itr->next;
+//	}
+	/********finding homography********************/
 	CvMat* homographyMatrix = FindHomographyMatrix(M_list);
-	//result = cvCloneImage(img);
-	//CvMat* result			= cvCreateMat(384,512,CV_32FC3);
-
- //        Just for checking homography Matrix
-	float a1=CV_MAT_ELEM(*homographyMatrix,float,0,0);
-	float a2=CV_MAT_ELEM(*homographyMatrix,float,1,0);
-	float a3=CV_MAT_ELEM(*homographyMatrix,float,2,0);
-	float a4=CV_MAT_ELEM(*homographyMatrix,float,0,1);
-	float a5=CV_MAT_ELEM(*homographyMatrix,float,1,1);
-	float a6=CV_MAT_ELEM(*homographyMatrix,float,2,1);
-	float a7=CV_MAT_ELEM(*homographyMatrix,float,0,2);
-	float a8=CV_MAT_ELEM(*homographyMatrix,float,1,2);
-	float a9=CV_MAT_ELEM(*homographyMatrix,float,2,2);
-
-	IplImage * result = cvCreateImage(cvSize(500,500),IPL_DEPTH_8U,3);
+	
+	float p1[]={0,0,1};
+	float p2[3];
+	float p3[]={0,img2->height,1};
+	float p4[3];
+	float p5[]={img2->width,0,1};
+	float p6[3];
+	CvMat src1 = cvMat(3,1,CV_32FC1,&p1);
+	CvMat dst1 = cvMat(3,1,CV_32FC1,&p2);
+	CvMat src2 = cvMat(3,1,CV_32FC1,&p3);
+	CvMat dst2 = cvMat(3,1,CV_32FC1,&p4);
+	CvMat src3 = cvMat(3,1,CV_32FC1,&p5);
+	CvMat dst3 = cvMat(3,1,CV_32FC1,&p6);
+	cvMatMulAdd(homographyMatrix,&src1,0,&dst1);
+	cvMatMulAdd(homographyMatrix,&src2,0,&dst2);
+	cvMatMulAdd(homographyMatrix,&src3,0,&dst3);
+	
+	/**********************************************/
+	IplImage * result = cvCreateImage(cvSize(p6[0],img2->height),IPL_DEPTH_8U,3);
 	cvWarpPerspective(img2, result, homographyMatrix);
+
 	
 	if(!cvSaveImage("CircledPic9.jpg",img1)) 
 	{
@@ -210,42 +251,98 @@ int main (int argc, char **argv)
 	{
 		printf("Could not save: %s\n","CircledPic10Result.jpg");
 	}
-	
-	// Display the image.
-    cvNamedWindow("Image1:", CV_WINDOW_AUTOSIZE);
- 	cvShowImage("Image1:", result);
 
-	Stitch(img1, result);
+
+	
+	IplImage* out=Stitch(img1, result,p2,p4);
+
+	//Display the image.
+	//cvNamedWindow("Out", CV_WINDOW_AUTOSIZE );
+	//cvShowImage("Out", out );
+	//cvWaitKey();
 
     return 0;
 }
 
-void Stitch(IplImage* left, IplImage* right)
+/*
+IplImage* Stitch(IplImage* left, IplImage* right)
 {
-	IplImage * test = cvCreateImage(cvSize(800,600),IPL_DEPTH_8U,3);
-	//These values need to be calculated using the matched points
-	int overlap = 160;
-	int y_offset = 0;
-	int x_offset = 230;
+	IplImage * result = cvCreateImage(cvSize(800,600),IPL_DEPTH_8U,3);
 
 	//Copy the first image onto the blank test image
 	//add the remainder of the image to the end
-	cvSetImageROI(test, cvRect(0, 0, right->width, right->height));
+	cvSetImageROI(result, cvRect(0, 0, right->width, right->height));
 	cvSetImageROI(right, cvRect(0, 0,right->width,right->height));
-	cvCopy(right, test);
+	cvCopy(right, result);
 	cvResetImageROI(right);
-	cvResetImageROI(test);
+	cvResetImageROI(result);
 	//set the region of interest
-	cvSetImageROI(test, cvRect(0, 0, left->width, left->height));
+	cvSetImageROI(result, cvRect(0, 0, left->width, left->height));
 	cvSetImageROI(left, cvRect(0, 0, left->width, left->height));
-	cvCopy(left, test);
+	cvCopy(left, result);
 	//always release the region of interest
 	cvResetImageROI(left);
-	cvResetImageROI(test);
+	cvResetImageROI(result);
+	return result;
+}
+*/
+
+IplImage* Stitch(IplImage* left, IplImage* right,float *p1, float* p2)
+{
+	float p;
+	if((left->width - p1[0])>(left->width - p2[0]))
+		p=left->width - p2[0];
+	else
+		p=left->width - p1[0];
+	IplImage * canvas1 = cvCreateImage(cvSize(right->width,right->height),IPL_DEPTH_8U,3);
+	IplImage * canvas2 = cvCreateImage(cvSize(right->width,right->height),IPL_DEPTH_8U,3);
+	IplImage * canvas3 = cvCreateImage(cvSize(right->width,right->height),IPL_DEPTH_8U,3);
+	//Copy the first image onto the blank test image
+	cvSetImageROI(canvas1, cvRect(0, 0, left->width, left->height));
+	cvSetImageROI(left, cvRect(0, 0,left->width,left->height));
+	cvCopy(left, canvas1);
+	cvResetImageROI(left);
+	cvResetImageROI(canvas1);
 	
-	cvNamedWindow("Alpha_Blend", 1 );
-	cvShowImage("Alpha_Blend", test );
+	//Copy the second image onto the blank test image
+	cvSetImageROI(canvas2, cvRect(0, 0, right->width, right->height));
+	cvSetImageROI(right, cvRect(0, 0, right->width, right->height));
+	cvCopy(right, canvas2);
+	cvResetImageROI(right);
+	cvResetImageROI(canvas2);
+	
+	//blending
+	cvSetImageROI(canvas1, cvRect(left->width-p,0,p,left->height));
+	cvSetImageROI(canvas2, cvRect(left->width-p,0,p,left->height));
+	cvSetImageROI(canvas3, cvRect(left->width-p,0,p,left->height));
+	cvAddWeighted(canvas2,.5,canvas1,.5,0,canvas3);
+	cvResetImageROI(canvas1);
+	cvResetImageROI(canvas2);
+	cvResetImageROI(canvas3);
+
+	cvSetImageROI(canvas1, cvRect(0,0,left->width-p,left->height));
+	cvSetImageROI(canvas3, cvRect(0,0,left->width-p,left->height));
+	cvCopy(canvas1, canvas3);
+	cvResetImageROI(canvas1);
+	cvResetImageROI(canvas3);
+
+	cvSetImageROI(canvas1, cvRect(0,0,left->width-p+1,left->height));
+	cvSetImageROI(canvas3, cvRect(0,0,left->width-p+1,left->height));
+	cvCopy(canvas1, canvas3);
+	cvResetImageROI(canvas1);
+	cvResetImageROI(canvas3);
+
+	cvSetImageROI(canvas2, cvRect(left->width-1,0,right->width-left->width,right->height));
+	cvSetImageROI(canvas3, cvRect(left->width-1,0,right->width-left->width,right->height));
+	cvCopy(canvas2, canvas3);
+	cvResetImageROI(canvas2);
+	cvResetImageROI(canvas3);
+
+//	cvSetImageROI(canvas3, cvRect(0,10,right->width,left->height-30));
+
+	cvNamedWindow("Out", CV_WINDOW_AUTOSIZE );
+	cvShowImage("Out", canvas3 );
+	cvSaveImage("out2.jpg",canvas3);
 	cvWaitKey();
-	
-	return;
+	return canvas2;
 }
