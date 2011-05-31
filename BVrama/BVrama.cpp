@@ -181,8 +181,8 @@ int main (int argc, char **argv)
           match -im1 i1.pgm -k1 k1.key -im2 i2.pgm -k2 k2.key > result.v
     */
 	/****** reading key files *****************/
-	char k1[20]={"1.key"};
-	char k2[20]={"2.key"};
+	char k1[20]={"temp.key"};
+	char k2[20]={"3.key"};
 
 	key1 = ReadKeyFile(k1);
 	key2 = ReadKeyFile(k2);
@@ -194,12 +194,12 @@ int main (int argc, char **argv)
     M_list = FindMatches( key1, key2, &count);
 	
 	// Open the file.
-    IplImage *img1 = cvLoadImage("1c.jpg");
+    IplImage *img1 = cvLoadImage("temp.jpg");
     if (!img1) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
 	}
-	IplImage *img2 = cvLoadImage("2c.jpg");
+	IplImage *img2 = cvLoadImage("3c.jpg");
     if (!img2) {
             printf("Error: Couldn't open the image file.\n");
             return 1;
@@ -235,7 +235,7 @@ int main (int argc, char **argv)
 	cvMatMulAdd(homographyMatrix,&src3,0,&dst3);
 	
 	/**********************************************/
-	IplImage * result = cvCreateImage(cvSize(p6[0],img2->height),IPL_DEPTH_8U,3);
+	IplImage * result = cvCreateImage(cvSize(p6[0]*2,img2->height),IPL_DEPTH_8U,3);
 	cvWarpPerspective(img2, result, homographyMatrix);
 
 	
@@ -264,28 +264,6 @@ int main (int argc, char **argv)
     return 0;
 }
 
-/*
-IplImage* Stitch(IplImage* left, IplImage* right)
-{
-	IplImage * result = cvCreateImage(cvSize(800,600),IPL_DEPTH_8U,3);
-
-	//Copy the first image onto the blank test image
-	//add the remainder of the image to the end
-	cvSetImageROI(result, cvRect(0, 0, right->width, right->height));
-	cvSetImageROI(right, cvRect(0, 0,right->width,right->height));
-	cvCopy(right, result);
-	cvResetImageROI(right);
-	cvResetImageROI(result);
-	//set the region of interest
-	cvSetImageROI(result, cvRect(0, 0, left->width, left->height));
-	cvSetImageROI(left, cvRect(0, 0, left->width, left->height));
-	cvCopy(left, result);
-	//always release the region of interest
-	cvResetImageROI(left);
-	cvResetImageROI(result);
-	return result;
-}
-*/
 
 IplImage* Stitch(IplImage* left, IplImage* right,float *p1, float* p2)
 {
